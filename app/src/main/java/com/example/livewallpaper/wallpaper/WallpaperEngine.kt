@@ -36,7 +36,7 @@ import kotlinx.coroutines.launch
  */
 class WallpaperEngine(
     private val host: Host,
-    context: Context
+    private val appContext: Context
 ) {
     /**
      * What the controller needs from the hosting Engine.
@@ -52,7 +52,7 @@ class WallpaperEngine(
     }
 
     private val prefs: WallpaperPreferencesRepository =
-        WallpaperPreferencesRepository.get(context)
+        WallpaperPreferencesRepository.get(appContext)
 
     private val handler = Handler(Looper.getMainLooper())
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
@@ -60,8 +60,9 @@ class WallpaperEngine(
     @Volatile
     private var config: WallpaperConfig = WallpaperConfig.DEFAULT
 
-    private var renderer: WallpaperRenderer = RendererFactory.create(config.type)
+    private var renderer: WallpaperRenderer = RendererFactory.create(config.type, appContext)
     private var lastType: WallpaperType = config.type
+    private var lastVideoUri: String? = config.videoUri
 
     private var surfaceW = 0
     private var surfaceH = 0
@@ -94,14 +95,22 @@ class WallpaperEngine(
         configJob = scope.launch {
             prefs.config.collect { next ->
                 val typeChanged = next.type != lastType
+                val videoChanged = next.type == WallpaperType.VIDEO &&
+                    next.videoUri != lastVideoUri
                 config = next
-                if (typeChanged) recreateRenderer(next.type)
+                if (typeChanged || videoChanged) {
+                    recreateRenderer(next.type)
+                } else {
+                    renderer.onConfigChanged(next)
+                }
             }
         }
     }
 
     fun onSurfaceCreated() {
         surfaceValid = true
+        renderer.onConfigChanged(config)
+        renderer.onSurfaceAttached(host.engineHolder)
         startLoop()
     }
 
@@ -112,17 +121,22 @@ class WallpaperEngine(
             surfaceH = height
             renderer.onSurfaceChanged(width, height)
         }
+        if (surfaceValid) {
+            renderer.onSurfaceAttached(host.engineHolder)
+        }
         startLoop()
     }
 
     fun onSurfaceDestroyed() {
         surfaceValid = false
+        renderer.onSurfaceDetached()
         stopLoop()
     }
 
     fun onVisibilityChanged(visible: Boolean) {
         // visible=false covers: screen off, fullscreen app, lock screen hiding
         // the home wallpaper. All cases must park the loop to save battery.
+        renderer.onVisibilityChanged(visible)
         if (visible) startLoop() else stopLoop()
     }
 
@@ -158,6 +172,9 @@ class WallpaperEngine(
 
     private fun startLoop() {
         if (running) return
+        // Surface-owned renderers (video) drive the surface themselves; the
+        // canvas loop stays parked with zero CPU.
+        if (renderer.drivesOwnSurface) return
         if (!surfaceValid || !host.engineIsVisible) return
         if (surfaceW <= 0 || surfaceH <= 0) {
             val frame = host.engineHolder.surfaceFrame
@@ -180,7 +197,7 @@ class WallpaperEngine(
     }
 
     private fun drawTick() {
-        if (!surfaceValid || !host.engineIsVisible) {
+        if (!surfaceValid || !host.engineIsVisible || renderer.drivesOwnSurface) {
             running = false
             return
         }
@@ -215,13 +232,18 @@ class WallpaperEngine(
 
     private fun recreateRenderer(type: WallpaperType) {
         lastType = type
+        lastVideoUri = config.videoUri
         try {
             renderer.release()
         } catch (_: Exception) {
         }
-        renderer = RendererFactory.create(type)
+        renderer = RendererFactory.create(type, appContext)
+        renderer.onConfigChanged(config)
         if (surfaceW > 0 && surfaceH > 0) {
             renderer.onSurfaceChanged(surfaceW, surfaceH)
+        }
+        if (surfaceValid) {
+            renderer.onSurfaceAttached(host.engineHolder)
         }
     }
 }

@@ -89,6 +89,17 @@ class WallpaperPreferencesRepository private constructor(context: Context) {
         appContext.wallpaperDataStore.edit { it[Keys.AMOLED_DARK] = enabled }
     }
 
+    suspend fun setVideoUri(uriString: String?) {
+        appContext.wallpaperDataStore.edit {
+            if (uriString.isNullOrBlank()) it.remove(Keys.VIDEO_URI)
+            else it[Keys.VIDEO_URI] = uriString
+        }
+    }
+
+    suspend fun setVideoMuted(muted: Boolean) {
+        appContext.wallpaperDataStore.edit { it[Keys.VIDEO_MUTED] = muted }
+    }
+
     suspend fun setBaseColors(argb: List<Int>) {
         appContext.wallpaperDataStore.edit {
             it[Keys.COLORS] = argb.take(4).joinToString(",")
@@ -105,6 +116,8 @@ class WallpaperPreferencesRepository private constructor(context: Context) {
         val BATTERY_SAVER = booleanPreferencesKey("battery_saver")
         val AMOLED_DARK = booleanPreferencesKey("amoled_dark")
         val COLORS = stringPreferencesKey("colors_csv")
+        val VIDEO_URI = stringPreferencesKey("video_uri")
+        val VIDEO_MUTED = booleanPreferencesKey("video_muted")
     }
 
     private fun androidx.datastore.preferences.core.Preferences.toConfig(): WallpaperConfig {
@@ -121,7 +134,9 @@ class WallpaperPreferencesRepository private constructor(context: Context) {
             fpsLimit = get(Keys.FPS) ?: defaults.fpsLimit,
             batterySaver = get(Keys.BATTERY_SAVER) ?: defaults.batterySaver,
             amoledDark = get(Keys.AMOLED_DARK) ?: defaults.amoledDark,
-            baseColors = colors
+            baseColors = colors,
+            videoUri = get(Keys.VIDEO_URI),
+            videoMuted = get(Keys.VIDEO_MUTED) ?: defaults.videoMuted
         )
     }
 

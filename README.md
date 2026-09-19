@@ -67,6 +67,17 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 Then: long-press home screen → **Wallpaper** → **Galaxy Live Wallpaper**,
 or open the app and tap **Set as wallpaper**.
 
+## Video wallpaper (your own video as the home screen)
+
+1. Open the app → style **Video** → **Pick a video** (any MP4/MKV from
+   Gallery/Downloads/Files — no storage permission needed).
+2. Optional: unmute via **Mute video** (default muted).
+3. Tap **Set as wallpaper**.
+
+The video loops center-cropped and pauses automatically when the screen is
+off or another app is in front, so it costs no battery while hidden. The
+pick survives reboot via a persisted Storage Access Framework grant.
+
 ## CI & releases
 
 `.github/workflows/android.yml` runs on every push/PR to `main`:

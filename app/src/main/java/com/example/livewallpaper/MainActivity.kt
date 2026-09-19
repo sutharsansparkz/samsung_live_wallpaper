@@ -7,12 +7,14 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import com.example.livewallpaper.settings.SettingsViewModel
 import com.example.livewallpaper.settings.WallpaperPreferencesRepository
 import com.example.livewallpaper.ui.LiveWallpaperTheme
 import com.example.livewallpaper.ui.SettingsScreen
 import com.example.livewallpaper.wallpaper.LiveWallpaperService
+import com.example.livewallpaper.wallpaper.WallpaperType
 
 /**
  * Configuration Activity.
@@ -30,6 +32,25 @@ class MainActivity : ComponentActivity() {
     private val prefs by lazy { WallpaperPreferencesRepository.get(this) }
     private val vm: SettingsViewModel by viewModels { SettingsViewModel.Factory(prefs) }
 
+    /**
+     * Storage Access Framework picker. No storage permission needed: the
+     * returned URI carries a read grant, which we persist so the wallpaper
+     * service can open the video after reboot too.
+     */
+    private val pickVideo = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri == null) return@registerForActivityResult
+        try {
+            contentResolver.takePersistableUriPermission(
+                uri, Intent.FLAG_GRANT_READ_URI_PERMISSION
+            )
+        } catch (_: SecurityException) {
+            // Provider doesn't support persisted grants; the URI still works
+            // until the device reboots.
+        }
+        vm.setType(WallpaperType.VIDEO)
+        vm.setVideoUri(uri.toString())
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -37,7 +58,8 @@ class MainActivity : ComponentActivity() {
                 SettingsScreen(
                     viewModel = vm,
                     onSetWallpaper = ::openLiveWallpaperChooser,
-                    onOpenPicker = ::openSystemPicker
+                    onOpenPicker = ::openSystemPicker,
+                    onPickVideo = { pickVideo.launch(arrayOf("video/*")) }
                 )
             }
         }
@@ -50,6 +72,12 @@ class MainActivity : ComponentActivity() {
      * heavily skinned builds).
      */
     private fun openLiveWallpaperChooser() {
+        val current = vm.config.value
+        if (current.type == WallpaperType.VIDEO && current.videoUri.isNullOrBlank()) {
+            Toast.makeText(this, "Pick a video first", Toast.LENGTH_SHORT).show()
+            pickVideo.launch(arrayOf("video/*"))
+            return
+        }
         try {
             val intent = Intent(WallpaperManager.ACTION_CHANGE_LIVE_WALLPAPER).apply {
                 putExtra(

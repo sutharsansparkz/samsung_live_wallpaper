@@ -1,5 +1,6 @@
 package com.example.livewallpaper.wallpaper.renderers
 
+import android.content.Context
 import com.example.livewallpaper.wallpaper.WallpaperRenderer
 import com.example.livewallpaper.wallpaper.WallpaperType
 
@@ -11,9 +12,10 @@ import com.example.livewallpaper.wallpaper.WallpaperType
  * automatically pick it up, including live-switching via recreateRenderer().
  */
 object RendererFactory {
-    fun create(type: WallpaperType): WallpaperRenderer = when (type) {
+    fun create(type: WallpaperType, context: Context): WallpaperRenderer = when (type) {
         WallpaperType.GRADIENT_FLOW -> GradientFlowRenderer()
         WallpaperType.PARTICLE_GALAXY -> ParticleGalaxyRenderer()
         WallpaperType.AURORA_WAVES -> AuroraWavesRenderer()
+        WallpaperType.VIDEO -> VideoRenderer(context.applicationContext)
     }
 }

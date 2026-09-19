@@ -27,6 +27,8 @@ class SettingsViewModel(
     fun setFps(fps: Int) = viewModelScope.launch { repo.setFpsLimit(fps) }
     fun setBatterySaver(enabled: Boolean) = viewModelScope.launch { repo.setBatterySaver(enabled) }
     fun setAmoledDark(enabled: Boolean) = viewModelScope.launch { repo.setAmoledDark(enabled) }
+    fun setVideoUri(uriString: String?) = viewModelScope.launch { repo.setVideoUri(uriString) }
+    fun setVideoMuted(muted: Boolean) = viewModelScope.launch { repo.setVideoMuted(muted) }
 
     class Factory(
         private val repo: WallpaperPreferencesRepository

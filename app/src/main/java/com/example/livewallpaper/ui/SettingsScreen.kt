@@ -2,6 +2,8 @@ package com.example.livewallpaper.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,8 +22,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.livewallpaper.settings.SettingsViewModel
 import com.example.livewallpaper.wallpaper.WallpaperConfig
@@ -33,11 +37,13 @@ import kotlin.math.roundToInt
  * the wallpaper itself keeps rendering in [com.example.livewallpaper.wallpaper.LiveWallpaperService]
  * regardless of whether this screen is open.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel,
     onSetWallpaper: () -> Unit,
     onOpenPicker: () -> Unit,
+    onPickVideo: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val config by viewModel.config.collectAsState()
@@ -57,7 +63,10 @@ fun SettingsScreen(
         )
 
         SettingSection("Style") {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 WallpaperType.entries.forEach { type ->
                     FilterChip(
                         selected = config.type == type,
@@ -65,6 +74,23 @@ fun SettingsScreen(
                         label = { Text(type.title) }
                     )
                 }
+            }
+        }
+
+        if (config.type == WallpaperType.VIDEO) {
+            SettingSection("Video") {
+                val videoName = rememberVideoName(config.videoUri)
+                OutlinedButton(
+                    onClick = onPickVideo,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(if (config.videoUri == null) "Pick a video" else "Change video")
+                }
+                Text(
+                    videoName ?: "No video selected — the wallpaper stays black until you pick one.",
+                    style = MaterialTheme.typography.bodySmall
+                )
+                SwitchRow("Mute video", config.videoMuted, viewModel::setVideoMuted)
             }
         }
 
@@ -145,5 +171,29 @@ private fun SwitchRow(label: String, checked: Boolean, onChange: (Boolean) -> Un
     ) {
         Text(label, style = MaterialTheme.typography.bodyMedium)
         Switch(checked = checked, onCheckedChange = onChange)
+    }
+}
+
+/** Resolves a display name for the picked video URI, or null when unset/unreadable. */
+@Composable
+private fun rememberVideoName(uriString: String?): String? {
+    val context = LocalContext.current
+    return remember(uriString) {
+        if (uriString.isNullOrBlank()) {
+            null
+        } else {
+            try {
+                val uri = android.net.Uri.parse(uriString)
+                context.contentResolver.query(
+                    uri,
+                    arrayOf(android.provider.OpenableColumns.DISPLAY_NAME),
+                    null, null, null
+                )?.use { cursor ->
+                    if (cursor.moveToFirst()) cursor.getString(0) else uri.lastPathSegment
+                } ?: android.net.Uri.parse(uriString).lastPathSegment
+            } catch (_: Exception) {
+                null
+            }
+        }
     }
 }

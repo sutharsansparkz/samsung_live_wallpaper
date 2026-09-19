@@ -27,7 +27,7 @@ class LiveWallpaperService : WallpaperService() {
     inner class LiveEngine : Engine(), WallpaperEngine.Host {
 
         private val controller: WallpaperEngine by lazy {
-            WallpaperEngine(host = this, context = this@LiveWallpaperService)
+            WallpaperEngine(host = this, appContext = this@LiveWallpaperService)
         }
 
         // ---- WallpaperEngine.Host -----------------------------------------

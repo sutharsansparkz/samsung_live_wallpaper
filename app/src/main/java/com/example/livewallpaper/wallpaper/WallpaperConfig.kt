@@ -15,7 +15,8 @@ import androidx.compose.ui.graphics.toArgb
 enum class WallpaperType(val title: String) {
     GRADIENT_FLOW("Gradient flow"),
     PARTICLE_GALAXY("Particle galaxy"),
-    AURORA_WAVES("Aurora waves");
+    AURORA_WAVES("Aurora waves"),
+    VIDEO("Video");
 
     companion object {
         fun fromName(name: String?): WallpaperType =
@@ -49,7 +50,15 @@ data class WallpaperConfig(
     /** Caps FPS at 30 and halves particles on low-end / power-save devices. */
     val batterySaver: Boolean = false,
     /** Pure-black background regions for AMOLED power savings. */
-    val amoledDark: Boolean = true
+    val amoledDark: Boolean = true,
+    /**
+     * Content URI (as String) of the user-picked video for [WallpaperType.VIDEO].
+     * Obtained via Storage Access Framework with a persisted read grant, so the
+     * wallpaper service can open it even after reboot without any permission.
+     */
+    val videoUri: String? = null,
+    /** Wallpapers pause when hidden, but when visible a VIDEO wallpaper can opt into sound. */
+    val videoMuted: Boolean = true
 ) {
     /** Effective frame budget after battery-saver adjustments. */
     val effectiveFps: Int get() = if (batterySaver) minOf(fpsLimit, 30) else fpsLimit
