@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Galaxy Live Wallpaper</string>
-    <string name="wallpaper_name">Galaxy Live Wallpaper</string>
-    <string name="wallpaper_description">Smooth, battery-friendly animated wallpaper with multiple styles. Optimized for Samsung One UI.</string>
+    <string name="app_name">Video Live Wallpaper</string>
+    <string name="wallpaper_name">Video Live Wallpaper</string>
+    <string name="wallpaper_description">Play your own video as a smooth, battery-friendly live wallpaper. Optimized for Samsung One UI.</string>
     <string name="settings_title">Wallpaper settings</string>
     <string name="action_set_wallpaper">Set as wallpaper</string>
     <string name="action_open_picker">Open wallpaper picker</string>

@@ -3,10 +3,12 @@ package com.example.livewallpaper
 import android.app.WallpaperManager
 import android.content.ComponentName
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import com.example.livewallpaper.settings.SettingsViewModel
@@ -24,7 +26,8 @@ import com.example.livewallpaper.wallpaper.LiveWallpaperService
  * after reboot (system re-binds it), and while the screen state changes.
  *
  * Also registered as `settingsActivity` in res/xml/wallpaper.xml, so the
- * system "Settings…" button in the live-wallpaper preview opens this screen.
+ * system "Settings…" button in the live-wallpaper preview opens this screen
+ * — even when the launcher icon is hidden.
  */
 class MainActivity : ComponentActivity() {
 
@@ -51,13 +54,16 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Transparent system bars with theme-aware icons; the Compose layout
+        // pads itself below them (see settingsRoot) so nothing collides.
+        enableEdgeToEdge()
         setContent {
             LiveWallpaperTheme {
                 SettingsScreen(
                     viewModel = vm,
                     onSetWallpaper = ::openLiveWallpaperChooser,
-                    onOpenPicker = ::openSystemPicker,
-                    onPickVideo = { pickVideo.launch(arrayOf("video/*")) }
+                    onPickVideo = { pickVideo.launch(arrayOf("video/*")) },
+                    onHideIcon = ::hideLauncherIcon
                 )
             }
         }
@@ -65,9 +71,7 @@ class MainActivity : ComponentActivity() {
 
     /**
      * Deep-links straight to this wallpaper's preview ("Set wallpaper" flow),
-     * the standard ACTION_CHANGE_LIVE_WALLPAPER pattern. Falls back to the
-     * generic picker on devices that ignore the component extra (some
-     * heavily skinned builds).
+     * the standard ACTION_CHANGE_LIVE_WALLPAPER pattern.
      */
     private fun openLiveWallpaperChooser() {
         if (vm.config.value.videoUri.isNullOrBlank()) {
@@ -84,20 +88,36 @@ class MainActivity : ComponentActivity() {
             }
             startActivity(intent)
         } catch (_: Exception) {
-            Toast.makeText(this, "Opening wallpaper picker…", Toast.LENGTH_SHORT).show()
-            openSystemPicker()
+            Toast.makeText(
+                this,
+                "Open Settings → Wallpaper to select Video Live Wallpaper",
+                Toast.LENGTH_LONG
+            ).show()
         }
     }
 
-    private fun openSystemPicker() {
+    /**
+     * Hides the app icon from the launcher / app drawer.
+     *
+     * Only the launcher *alias* is disabled — MainActivity itself stays
+     * enabled, so the wallpaper preview's Settings button keeps working.
+     * There is no in-app "unhide": reopen settings via
+     * Wallpaper → Video Live Wallpaper → Settings.
+     */
+    private fun hideLauncherIcon() {
         try {
-            startActivity(Intent(WallpaperManager.ACTION_LIVE_WALLPAPER_CHOOSER))
-        } catch (_: Exception) {
+            packageManager.setComponentEnabledSetting(
+                ComponentName(this, "$packageName.LauncherAlias"),
+                PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                PackageManager.DONT_KILL_APP
+            )
             Toast.makeText(
                 this,
-                "Open Settings → Wallpaper to select Galaxy Live Wallpaper",
+                "App icon hidden. Reopen settings from the wallpaper preview → Settings.",
                 Toast.LENGTH_LONG
             ).show()
+        } catch (_: Exception) {
+            Toast.makeText(this, "Could not hide the icon on this launcher", Toast.LENGTH_SHORT).show()
         }
     }
 }

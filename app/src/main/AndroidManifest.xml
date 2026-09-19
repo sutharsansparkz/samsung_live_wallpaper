@@ -13,17 +13,28 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.LiveWallpaper">
 
-        <!-- Configuration Activity: launched from the wallpaper picker
-             (via wallpaper.xml settingsActivity) and from the launcher. -->
+        <!-- Configuration Activity: no launcher filter here — the LauncherAlias
+             below owns the home-screen icon, so hiding the alias never breaks
+             the wallpaper picker's Settings button that opens this screen. -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:theme="@style/Theme.LiveWallpaper">
+            android:theme="@style/Theme.LiveWallpaper" />
+
+        <!-- Launcher icon entry point. Disable this component to hide the app. -->
+        <activity-alias
+            android:name=".LauncherAlias"
+            android:targetActivity=".MainActivity"
+            android:exported="true"
+            android:enabled="true"
+            android:icon="@mipmap/ic_launcher"
+            android:roundIcon="@mipmap/ic_launcher_round"
+            android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
+        </activity-alias>
 
         <!-- Native live wallpaper entry point. This is what makes the app
              appear in Android / Samsung One UI's wallpaper picker. -->

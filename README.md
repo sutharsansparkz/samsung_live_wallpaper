@@ -64,6 +64,11 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 Then open the app → **Pick a video** → **Set as wallpaper**
 (or long-press home screen → Wallpaper).
 
+The settings UI is black-and-white and follows the system dark/light theme.
+**Hide app icon** in the app removes the launcher icon; settings stay
+reachable from the live-wallpaper preview screen
+(Wallpaper → Video Live Wallpaper → Settings).
+
 ## CI & releases
 
 `.github/workflows/android.yml` runs on every push/PR to `main`:

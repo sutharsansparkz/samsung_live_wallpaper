@@ -35,8 +35,8 @@ import com.example.livewallpaper.settings.SettingsViewModel
 fun SettingsScreen(
     viewModel: SettingsViewModel,
     onSetWallpaper: () -> Unit,
-    onOpenPicker: () -> Unit,
     onPickVideo: () -> Unit,
+    onHideIcon: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val config by viewModel.config.collectAsState()
@@ -44,6 +44,7 @@ fun SettingsScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .settingsRoot()
             .verticalScroll(rememberScrollState())
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -82,9 +83,15 @@ fun SettingsScreen(
         Button(onClick = onSetWallpaper, modifier = Modifier.fillMaxWidth()) {
             Text("Set as wallpaper")
         }
-        OutlinedButton(onClick = onOpenPicker, modifier = Modifier.fillMaxWidth()) {
-            Text("Open system wallpaper picker")
+        OutlinedButton(onClick = onHideIcon, modifier = Modifier.fillMaxWidth()) {
+            Text("Hide app icon")
         }
+        Text(
+            "Hiding removes the icon from the launcher. You can still open " +
+                "these settings from the live-wallpaper preview screen " +
+                "(Wallpaper → Video Live Wallpaper → Settings).",
+            style = MaterialTheme.typography.bodySmall
+        )
 
         Text(
             "Samsung tip: after setting, long-press the home screen → Wallpaper " +
