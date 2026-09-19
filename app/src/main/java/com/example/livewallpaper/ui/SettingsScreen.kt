@@ -49,14 +49,23 @@ fun SettingsScreen(
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text("Video Live Wallpaper", style = MaterialTheme.typography.headlineSmall)
+        Text(
+            "Video Live Wallpaper",
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onBackground
+        )
         Text(
             "Pick a video and set it as your home-screen wallpaper. " +
                 "It loops automatically and pauses when hidden.",
-            style = MaterialTheme.typography.bodyMedium
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onBackground
         )
 
-        Text("Your video", style = MaterialTheme.typography.titleSmall)
+        Text(
+            "Your video",
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.onBackground
+        )
         OutlinedButton(
             onClick = onPickVideo,
             modifier = Modifier.fillMaxWidth()
@@ -66,7 +75,8 @@ fun SettingsScreen(
         Text(
             rememberVideoName(config.videoUri)
                 ?: "No video selected — the wallpaper stays black until you pick one.",
-            style = MaterialTheme.typography.bodySmall
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
         Row(
@@ -74,7 +84,11 @@ fun SettingsScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Mute video", style = MaterialTheme.typography.bodyMedium)
+            Text(
+                "Mute video",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onBackground
+            )
             Switch(checked = config.videoMuted, onCheckedChange = viewModel::setVideoMuted)
         }
 
@@ -90,13 +104,15 @@ fun SettingsScreen(
             "Hiding removes the icon from the launcher. You can still open " +
                 "these settings from the live-wallpaper preview screen " +
                 "(Wallpaper → Video Live Wallpaper → Settings).",
-            style = MaterialTheme.typography.bodySmall
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
         Text(
             "Samsung tip: after setting, long-press the home screen → Wallpaper " +
                 "to move it between Home and Lock screens where One UI allows it.",
-            style = MaterialTheme.typography.bodySmall
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
