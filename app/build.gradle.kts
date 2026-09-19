@@ -36,8 +36,8 @@ android {
         // Galaxy devices while allowing modern Canvas/ColorSpace APIs.
         // Bump to 30+ only if you need per-app language or exact-alarm APIs.
         targetSdk = 36
-        versionCode = 5
-        versionName = "1.3.1"
+        versionCode = 6
+        versionName = "1.3.2"
 
         vectorDrawables {
             useSupportLibrary = true

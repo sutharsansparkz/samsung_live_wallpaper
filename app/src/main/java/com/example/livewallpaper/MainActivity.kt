@@ -103,21 +103,45 @@ class MainActivity : ComponentActivity() {
      * enabled, so the wallpaper preview's Settings button keeps working.
      * There is no in-app "unhide": reopen settings via
      * Wallpaper → Video Live Wallpaper → Settings.
+     *
+     * Note: some launchers (including One UI Home) cache the app list, so the
+     * icon can linger until the phone is restarted. We read the state back
+     * and report what the system actually did.
      */
     private fun hideLauncherIcon() {
+        val alias = ComponentName(this, "$packageName.LauncherAlias")
         try {
             packageManager.setComponentEnabledSetting(
-                ComponentName(this, "$packageName.LauncherAlias"),
+                alias,
                 PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
                 PackageManager.DONT_KILL_APP
             )
-            Toast.makeText(
-                this,
-                "App icon hidden. Reopen settings from the wallpaper preview → Settings.",
-                Toast.LENGTH_LONG
-            ).show()
         } catch (_: Exception) {
             Toast.makeText(this, "Could not hide the icon on this launcher", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val state = try {
+            packageManager.getComponentEnabledSetting(alias)
+        } catch (_: Exception) {
+            PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+        }
+        val hidden = state == PackageManager.COMPONENT_ENABLED_STATE_DISABLED ||
+            state == PackageManager.COMPONENT_ENABLED_STATE_DISABLED_USER ||
+            state == PackageManager.COMPONENT_ENABLED_STATE_DISABLED_UNTIL_USED
+        if (hidden) {
+            Toast.makeText(
+                this,
+                "App icon hidden. If it still shows, restart your phone " +
+                    "(launchers cache the app list). Reopen settings from the " +
+                    "wallpaper preview → Settings.",
+                Toast.LENGTH_LONG
+            ).show()
+        } else {
+            Toast.makeText(
+                this,
+                "System kept the icon enabled — restart your phone and try again.",
+                Toast.LENGTH_LONG
+            ).show()
         }
     }
 }

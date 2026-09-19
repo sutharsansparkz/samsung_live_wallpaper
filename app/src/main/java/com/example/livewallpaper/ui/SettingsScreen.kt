@@ -103,7 +103,9 @@ fun SettingsScreen(
         Text(
             "Hiding removes the icon from the launcher. You can still open " +
                 "these settings from the live-wallpaper preview screen " +
-                "(Wallpaper → Video Live Wallpaper → Settings).",
+                "(Wallpaper → Video Live Wallpaper → Settings). " +
+                "If the icon stays visible, restart the phone — launchers " +
+                "sometimes cache the app list.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
