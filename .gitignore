@@ -19,3 +19,6 @@ release.keystore
 
 # OS
 .DS_Store
+
+# Kotlin daemon sessions
+.kotlin/
