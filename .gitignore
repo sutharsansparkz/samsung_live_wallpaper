@@ -1,0 +1,21 @@
+# Gradle
+.gradle/
+build/
+local.properties
+*.iml
+
+# Android Studio
+.idea/
+*.hprof
+captures/
+
+# Keystore
+*.jks
+*.keystore
+# Release signing material must never be committed; CI restores it from
+# the KEYSTORE_BASE64 / KEYSTORE_PASSWORD / KEY_ALIAS / KEY_PASSWORD secrets.
+upload.keystore
+release.keystore
+
+# OS
+.DS_Store
