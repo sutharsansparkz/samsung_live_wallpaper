@@ -2,8 +2,6 @@ package com.example.livewallpaper.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,10 +11,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,16 +24,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.livewallpaper.settings.SettingsViewModel
-import com.example.livewallpaper.wallpaper.WallpaperConfig
-import com.example.livewallpaper.wallpaper.WallpaperType
-import kotlin.math.roundToInt
 
 /**
- * Configuration UI. This is a normal screen for editing DataStore settings —
- * the wallpaper itself keeps rendering in [com.example.livewallpaper.wallpaper.LiveWallpaperService]
+ * Configuration UI. This is a normal screen for picking the video and
+ * editing settings — the wallpaper itself keeps rendering in
+ * [com.example.livewallpaper.wallpaper.LiveWallpaperService]
  * regardless of whether this screen is open.
  */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel,
@@ -55,86 +48,33 @@ fun SettingsScreen(
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text("Galaxy Live Wallpaper", style = MaterialTheme.typography.headlineSmall)
+        Text("Video Live Wallpaper", style = MaterialTheme.typography.headlineSmall)
         Text(
-            "Pick a style, tune it, then set it as your wallpaper. " +
-                "Changes apply live — even after this screen is closed.",
+            "Pick a video and set it as your home-screen wallpaper. " +
+                "It loops automatically and pauses when hidden.",
             style = MaterialTheme.typography.bodyMedium
         )
 
-        SettingSection("Style") {
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                WallpaperType.entries.forEach { type ->
-                    FilterChip(
-                        selected = config.type == type,
-                        onClick = { viewModel.setType(type) },
-                        label = { Text(type.title) }
-                    )
-                }
-            }
+        Text("Your video", style = MaterialTheme.typography.titleSmall)
+        OutlinedButton(
+            onClick = onPickVideo,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(if (config.videoUri == null) "Pick a video" else "Change video")
         }
+        Text(
+            rememberVideoName(config.videoUri)
+                ?: "No video selected — the wallpaper stays black until you pick one.",
+            style = MaterialTheme.typography.bodySmall
+        )
 
-        if (config.type == WallpaperType.VIDEO) {
-            SettingSection("Video") {
-                val videoName = rememberVideoName(config.videoUri)
-                OutlinedButton(
-                    onClick = onPickVideo,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(if (config.videoUri == null) "Pick a video" else "Change video")
-                }
-                Text(
-                    videoName ?: "No video selected — the wallpaper stays black until you pick one.",
-                    style = MaterialTheme.typography.bodySmall
-                )
-                SwitchRow("Mute video", config.videoMuted, viewModel::setVideoMuted)
-            }
-        }
-
-        SettingSection("Speed  (${String.format("%.1fx", config.speedMultiplier)})") {
-            Slider(
-                value = config.speedMultiplier,
-                onValueChange = { viewModel.setSpeed(it) },
-                valueRange = WallpaperConfig.MIN_SPEED..WallpaperConfig.MAX_SPEED
-            )
-        }
-
-        SettingSection("Particles  (${config.particleCount})") {
-            Slider(
-                value = config.particleCount.toFloat(),
-                onValueChange = { viewModel.setParticleCount(it.roundToInt()) },
-                valueRange = WallpaperConfig.MIN_PARTICLES.toFloat()..
-                    WallpaperConfig.MAX_PARTICLES.toFloat(),
-                steps = 11
-            )
-        }
-
-        SettingSection("Frame rate") {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                WallpaperConfig.FPS_OPTIONS.forEach { fps ->
-                    FilterChip(
-                        selected = config.fpsLimit == fps,
-                        onClick = { viewModel.setFps(fps) },
-                        label = { Text("$fps fps") }
-                    )
-                }
-            }
-            if (config.batterySaver) {
-                Text(
-                    "Battery saver caps rendering at 30 fps.",
-                    style = MaterialTheme.typography.bodySmall
-                )
-            }
-        }
-
-        SettingSection("Behaviour") {
-            SwitchRow("Parallax on swipe", config.parallaxEnabled, viewModel::setParallax)
-            SwitchRow("Touch ripples", config.touchInteractionEnabled, viewModel::setTouch)
-            SwitchRow("AMOLED dark blacks", config.amoledDark, viewModel::setAmoledDark)
-            SwitchRow("Battery saver", config.batterySaver, viewModel::setBatterySaver)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("Mute video", style = MaterialTheme.typography.bodyMedium)
+            Switch(checked = config.videoMuted, onCheckedChange = viewModel::setVideoMuted)
         }
 
         Spacer(Modifier.height(4.dp))
@@ -151,26 +91,6 @@ fun SettingsScreen(
                 "to move it between Home and Lock screens where One UI allows it.",
             style = MaterialTheme.typography.bodySmall
         )
-    }
-}
-
-@Composable
-private fun SettingSection(title: String, content: @Composable () -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(title, style = MaterialTheme.typography.titleSmall)
-        content()
-    }
-}
-
-@Composable
-private fun SwitchRow(label: String, checked: Boolean, onChange: (Boolean) -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(label, style = MaterialTheme.typography.bodyMedium)
-        Switch(checked = checked, onCheckedChange = onChange)
     }
 }
 

@@ -5,12 +5,9 @@ import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
-import androidx.datastore.preferences.core.floatPreferencesKey
-import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.example.livewallpaper.wallpaper.WallpaperConfig
-import com.example.livewallpaper.wallpaper.WallpaperType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -30,8 +27,8 @@ private val Context.wallpaperDataStore by preferencesDataStore(
  * Single source of truth for wallpaper settings, backed by DataStore.
  *
  * Both the settings Activity and [com.example.livewallpaper.wallpaper.WallpaperEngine]
- * collect [config]; the engine therefore picks up changes live, even while it
- * keeps running after the Activity is closed.
+ * collect [config]; the engine therefore picks up a newly chosen video live,
+ * even while it keeps running after the Activity is closed.
  */
 class WallpaperPreferencesRepository private constructor(context: Context) {
 
@@ -48,47 +45,6 @@ class WallpaperPreferencesRepository private constructor(context: Context) {
             .map { prefs -> prefs.toConfig() }
             .stateIn(scope, SharingStarted.Eagerly, WallpaperConfig.DEFAULT)
 
-    suspend fun setType(type: WallpaperType) {
-        appContext.wallpaperDataStore.edit { it[Keys.TYPE] = type.name }
-    }
-
-    suspend fun setParticleCount(count: Int) {
-        appContext.wallpaperDataStore.edit {
-            it[Keys.PARTICLE_COUNT] = count.coerceIn(
-                WallpaperConfig.MIN_PARTICLES,
-                WallpaperConfig.MAX_PARTICLES
-            )
-        }
-    }
-
-    suspend fun setSpeed(speed: Float) {
-        appContext.wallpaperDataStore.edit {
-            it[Keys.SPEED] = speed.coerceIn(WallpaperConfig.MIN_SPEED, WallpaperConfig.MAX_SPEED)
-        }
-    }
-
-    suspend fun setParallaxEnabled(enabled: Boolean) {
-        appContext.wallpaperDataStore.edit { it[Keys.PARALLAX] = enabled }
-    }
-
-    suspend fun setTouchEnabled(enabled: Boolean) {
-        appContext.wallpaperDataStore.edit { it[Keys.TOUCH] = enabled }
-    }
-
-    suspend fun setFpsLimit(fps: Int) {
-        appContext.wallpaperDataStore.edit {
-            it[Keys.FPS] = if (fps in WallpaperConfig.FPS_OPTIONS) fps else 60
-        }
-    }
-
-    suspend fun setBatterySaver(enabled: Boolean) {
-        appContext.wallpaperDataStore.edit { it[Keys.BATTERY_SAVER] = enabled }
-    }
-
-    suspend fun setAmoledDark(enabled: Boolean) {
-        appContext.wallpaperDataStore.edit { it[Keys.AMOLED_DARK] = enabled }
-    }
-
     suspend fun setVideoUri(uriString: String?) {
         appContext.wallpaperDataStore.edit {
             if (uriString.isNullOrBlank()) it.remove(Keys.VIDEO_URI)
@@ -100,41 +56,14 @@ class WallpaperPreferencesRepository private constructor(context: Context) {
         appContext.wallpaperDataStore.edit { it[Keys.VIDEO_MUTED] = muted }
     }
 
-    suspend fun setBaseColors(argb: List<Int>) {
-        appContext.wallpaperDataStore.edit {
-            it[Keys.COLORS] = argb.take(4).joinToString(",")
-        }
-    }
-
     private object Keys {
-        val TYPE = stringPreferencesKey("type")
-        val PARTICLE_COUNT = intPreferencesKey("particle_count")
-        val SPEED = floatPreferencesKey("speed")
-        val PARALLAX = booleanPreferencesKey("parallax")
-        val TOUCH = booleanPreferencesKey("touch")
-        val FPS = intPreferencesKey("fps")
-        val BATTERY_SAVER = booleanPreferencesKey("battery_saver")
-        val AMOLED_DARK = booleanPreferencesKey("amoled_dark")
-        val COLORS = stringPreferencesKey("colors_csv")
         val VIDEO_URI = stringPreferencesKey("video_uri")
         val VIDEO_MUTED = booleanPreferencesKey("video_muted")
     }
 
     private fun androidx.datastore.preferences.core.Preferences.toConfig(): WallpaperConfig {
         val defaults = WallpaperConfig.DEFAULT
-        val colors = get(Keys.COLORS)
-            ?.split(",")?.mapNotNull { it.toIntOrNull() }?.takeIf { it.size >= 2 }
-            ?: defaults.baseColors
         return WallpaperConfig(
-            type = WallpaperType.fromName(get(Keys.TYPE)),
-            particleCount = get(Keys.PARTICLE_COUNT) ?: defaults.particleCount,
-            speedMultiplier = get(Keys.SPEED) ?: defaults.speedMultiplier,
-            parallaxEnabled = get(Keys.PARALLAX) ?: defaults.parallaxEnabled,
-            touchInteractionEnabled = get(Keys.TOUCH) ?: defaults.touchInteractionEnabled,
-            fpsLimit = get(Keys.FPS) ?: defaults.fpsLimit,
-            batterySaver = get(Keys.BATTERY_SAVER) ?: defaults.batterySaver,
-            amoledDark = get(Keys.AMOLED_DARK) ?: defaults.amoledDark,
-            baseColors = colors,
             videoUri = get(Keys.VIDEO_URI),
             videoMuted = get(Keys.VIDEO_MUTED) ?: defaults.videoMuted
         )

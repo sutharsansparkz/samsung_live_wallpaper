@@ -1,10 +1,9 @@
-# Galaxy Live Wallpaper (Samsung / One UI)
+# Video Live Wallpaper (Samsung / One UI)
 
-A production-quality, native Android **Live Wallpaper** built on
-`WallpaperService` / `WallpaperService.Engine` — no Activity, ImageView,
-WebView, or foreground-service hacks. The wallpaper appears in Android and
-Samsung One UI's wallpaper picker and keeps running after the settings screen
-is closed.
+A production-quality, native Android **video live wallpaper** built on
+`WallpaperService` / `WallpaperService.Engine`. Pick any video on your
+Samsung Galaxy and it plays, looping, as your home-screen wallpaper —
+pausing automatically when hidden to save battery.
 
 ## Requirements
 
@@ -23,20 +22,17 @@ app/src/main/
 │   ├── LiveWallpaperApplication.kt          # Early DataStore init (reboot path)
 │   ├── wallpaper/
 │   │   ├── LiveWallpaperService.kt          # Native WallpaperService + thin LiveEngine
-│   │   ├── WallpaperEngine.kt               # Frame loop, visibility, battery policy
-│   │   ├── WallpaperRenderer.kt             # Renderer contract (extension point)
-│   │   ├── WallpaperConfig.kt               # Immutable settings model
+│   │   ├── WallpaperEngine.kt               # Surface/visibility/config forwarding
+│   │   ├── WallpaperRenderer.kt             # Renderer contract
+│   │   ├── WallpaperConfig.kt               # Settings model (video URI + mute)
 │   │   └── renderers/
-│   │       ├── RendererFactory.kt           # Type -> renderer registry
-│   │       ├── GradientFlowRenderer.kt
-│   │       ├── ParticleGalaxyRenderer.kt
-│   │       └── AuroraWavesRenderer.kt
+│   │       └── VideoRenderer.kt             # MediaPlayer → wallpaper surface
 │   ├── settings/
 │   │   ├── WallpaperPreferencesRepository.kt # DataStore + StateFlow source of truth
 │   │   └── SettingsViewModel.kt
 │   └── ui/
-│       ├── SettingsScreen.kt                # Compose settings screen
-│       └── theme/Theme.kt
+│       ├── SettingsScreen.kt                # Compose settings screen (DayNight)
+│       └── theme/Theme.kt                   # Follows system dark/light theme
 └── res/
     ├── xml/wallpaper.xml                    # Picker metadata (thumbnail, settingsActivity)
     ├── drawable/wallpaper_thumbnail.xml
@@ -49,13 +45,14 @@ app/src/main/
 |---|---|
 | Native `WallpaperService` | `LiveWallpaperService` with `BIND_WALLPAPER`, `WallpaperService` intent filter, `wallpaper.xml` metadata |
 | Appears in picker / settable | `android.service.wallpaper` meta-data + thumbnail; `MainActivity` deep-links via `ACTION_CHANGE_LIVE_WALLPAPER` |
+| Your video as wallpaper | SAF picker (`OpenDocument`, no storage permission) → `MediaPlayer` renders direct to the surface, center-cropped, looping |
 | Lock screen | System/One UI decides; service is `directBootAware` so it renders pre-unlock where allowed |
-| Keeps working after config closes | Engine is owned by the system-bound service; settings flow in via DataStore `StateFlow` |
-| Screen on/off + visibility | `onVisibilityChanged(false)` parks the loop (covers screen-off, fullscreen apps); zero polling while hidden |
-| Battery | User FPS budget 15/30/60, battery-saver cap at 30 + halved particles, preview capped at 30, no wake locks, allocation-free steady state |
-| Reboot | System automatically re-binds the selected wallpaper; `Application` warms the settings flow for the no-Activity path. No `BOOT_COMPLETED` needed |
-| Samsung / One UI | Parallax via `onOffsetsChanged`, foldable/rotation/DeX resize handling, AMOLED black option, defensive surface teardown handling |
-| Extensible | New style = enum entry + `WallpaperRenderer` + one line in `RendererFactory` |
+| Keeps working after config closes | Engine is owned by the system-bound service; video URI flows in via DataStore `StateFlow`, persisted across reboot |
+| Screen on/off + visibility | `onVisibilityChanged(false)` pauses playback (covers screen-off, fullscreen apps); zero decoding while hidden |
+| Battery | No canvas loop, no wake locks; hardware video decoding only while visible; touch/parallax listeners left off |
+| Reboot | System automatically re-binds the selected wallpaper; persisted URI grant lets the service reopen the video |
+| Samsung / One UI | Foldable/rotation/DeX resize handling, defensive player lifecycle, DayNight settings UI |
+| Dark / light theme | Settings UI uses `Theme.Material3.DayNight` + `isSystemInDarkTheme()`, following the system (One UI) setting |
 
 ## Build & install
 
@@ -64,19 +61,8 @@ app/src/main/
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-Then: long-press home screen → **Wallpaper** → **Galaxy Live Wallpaper**,
-or open the app and tap **Set as wallpaper**.
-
-## Video wallpaper (your own video as the home screen)
-
-1. Open the app → style **Video** → **Pick a video** (any MP4/MKV from
-   Gallery/Downloads/Files — no storage permission needed).
-2. Optional: unmute via **Mute video** (default muted).
-3. Tap **Set as wallpaper**.
-
-The video loops center-cropped and pauses automatically when the screen is
-off or another app is in front, so it costs no battery while hidden. The
-pick survives reboot via a persisted Storage Access Framework grant.
+Then open the app → **Pick a video** → **Set as wallpaper**
+(or long-press home screen → Wallpaper).
 
 ## CI & releases
 
@@ -114,11 +100,3 @@ export KEYSTORE_PASSWORD=… KEY_ALIAS=upload KEY_PASSWORD=…
 
 Back up the keystore and its passwords independently — losing them means
 the Play listing can never be updated with the same app identity.
-
-## Adding a new wallpaper type
-
-1. Implement `WallpaperRenderer` (see `AuroraWavesRenderer` for a minimal example).
-2. Add an entry to `WallpaperType`.
-3. Return it from `RendererFactory.create()`.
-
-No changes to the service, engine, or settings plumbing are required.

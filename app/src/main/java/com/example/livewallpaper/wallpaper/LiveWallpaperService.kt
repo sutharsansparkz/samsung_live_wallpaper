@@ -10,9 +10,8 @@ import android.view.SurfaceHolder
  * Activity) when the user picks the wallpaper, including after reboot —
  * no BOOT_COMPLETED receiver or foreground service is needed or used.
  *
- * [LiveEngine] is intentionally thin: all frame-loop, visibility, battery
- * and renderer logic lives in [WallpaperEngine], which is independently
- * testable and extensible via RendererFactory.
+ * [LiveEngine] is intentionally thin: all surface, visibility, battery
+ * and player logic lives in [WallpaperEngine].
  */
 class LiveWallpaperService : WallpaperService() {
 

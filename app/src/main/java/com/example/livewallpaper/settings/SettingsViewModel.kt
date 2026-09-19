@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.livewallpaper.wallpaper.WallpaperConfig
-import com.example.livewallpaper.wallpaper.WallpaperType
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
@@ -19,14 +18,6 @@ class SettingsViewModel(
 
     val config: StateFlow<WallpaperConfig> = repo.config
 
-    fun setType(type: WallpaperType) = viewModelScope.launch { repo.setType(type) }
-    fun setParticleCount(count: Int) = viewModelScope.launch { repo.setParticleCount(count) }
-    fun setSpeed(speed: Float) = viewModelScope.launch { repo.setSpeed(speed) }
-    fun setParallax(enabled: Boolean) = viewModelScope.launch { repo.setParallaxEnabled(enabled) }
-    fun setTouch(enabled: Boolean) = viewModelScope.launch { repo.setTouchEnabled(enabled) }
-    fun setFps(fps: Int) = viewModelScope.launch { repo.setFpsLimit(fps) }
-    fun setBatterySaver(enabled: Boolean) = viewModelScope.launch { repo.setBatterySaver(enabled) }
-    fun setAmoledDark(enabled: Boolean) = viewModelScope.launch { repo.setAmoledDark(enabled) }
     fun setVideoUri(uriString: String?) = viewModelScope.launch { repo.setVideoUri(uriString) }
     fun setVideoMuted(muted: Boolean) = viewModelScope.launch { repo.setVideoMuted(muted) }
 

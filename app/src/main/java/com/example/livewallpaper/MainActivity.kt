@@ -14,7 +14,6 @@ import com.example.livewallpaper.settings.WallpaperPreferencesRepository
 import com.example.livewallpaper.ui.LiveWallpaperTheme
 import com.example.livewallpaper.ui.SettingsScreen
 import com.example.livewallpaper.wallpaper.LiveWallpaperService
-import com.example.livewallpaper.wallpaper.WallpaperType
 
 /**
  * Configuration Activity.
@@ -47,7 +46,6 @@ class MainActivity : ComponentActivity() {
             // Provider doesn't support persisted grants; the URI still works
             // until the device reboots.
         }
-        vm.setType(WallpaperType.VIDEO)
         vm.setVideoUri(uri.toString())
     }
 
@@ -72,8 +70,7 @@ class MainActivity : ComponentActivity() {
      * heavily skinned builds).
      */
     private fun openLiveWallpaperChooser() {
-        val current = vm.config.value
-        if (current.type == WallpaperType.VIDEO && current.videoUri.isNullOrBlank()) {
+        if (vm.config.value.videoUri.isNullOrBlank()) {
             Toast.makeText(this, "Pick a video first", Toast.LENGTH_SHORT).show()
             pickVideo.launch(arrayOf("video/*"))
             return
